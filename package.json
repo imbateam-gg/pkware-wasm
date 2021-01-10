@@ -1,0 +1,11 @@
+{
+  "name": "pkware-wasm",
+  "version": "1.0.0",
+  "description": "StormLib's Implode and Explode algorithms",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Alex Pineda <alexpineda@fastmail.com>",
+  "license": "MIT"
+}
