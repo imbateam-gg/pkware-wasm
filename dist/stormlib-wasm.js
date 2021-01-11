@@ -60,6 +60,12 @@ Module['ready'] = new Promise(function(resolve, reject) {
       }
     
 
+      if (!Object.getOwnPropertyDescriptor(Module['ready'], '_crc32')) {
+        Object.defineProperty(Module['ready'], '_crc32', { configurable: true, get: function() { abort('You are getting _crc32 on the Promise object, instead of the instance. Use .then() to get called back with the instance, see the MODULARIZE docs in src/settings.js') } });
+        Object.defineProperty(Module['ready'], '_crc32', { configurable: true, set: function() { abort('You are setting _crc32 on the Promise object, instead of the instance. Use .then() to get called back with the instance, see the MODULARIZE docs in src/settings.js') } });
+      }
+    
+
       if (!Object.getOwnPropertyDescriptor(Module['ready'], '_emscripten_stack_get_end')) {
         Object.defineProperty(Module['ready'], '_emscripten_stack_get_end', { configurable: true, get: function() { abort('You are getting _emscripten_stack_get_end on the Promise object, instead of the instance. Use .then() to get called back with the instance, see the MODULARIZE docs in src/settings.js') } });
         Object.defineProperty(Module['ready'], '_emscripten_stack_get_end', { configurable: true, set: function() { abort('You are setting _emscripten_stack_get_end on the Promise object, instead of the instance. Use .then() to get called back with the instance, see the MODULARIZE docs in src/settings.js') } });
@@ -1551,7 +1557,7 @@ function createExportWrapper(name, fixedasm) {
   };
 }
 
-var wasmBinaryFile = 'slib.wasm';
+var wasmBinaryFile = 'stormlib-wasm.wasm';
 if (!isDataURI(wasmBinaryFile)) {
   wasmBinaryFile = locateFile(wasmBinaryFile);
 }
@@ -1840,6 +1846,9 @@ var _free = Module["_free"] = createExportWrapper("free");
 
 /** @type {function(...*):?} */
 var _Decompress_PKLIB = Module["_Decompress_PKLIB"] = createExportWrapper("Decompress_PKLIB");
+
+/** @type {function(...*):?} */
+var _crc32 = Module["_crc32"] = createExportWrapper("crc32");
 
 /** @type {function(...*):?} */
 var ___errno_location = Module["___errno_location"] = createExportWrapper("__errno_location");

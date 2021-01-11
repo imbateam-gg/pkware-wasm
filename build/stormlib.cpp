@@ -1,22 +1,10 @@
-// Command Line StormLib.cpp : This file contains the 'main' function. Program execution begins and ends there.
-//
 
 #include <iostream>
-//#define STORMLIB_NO_AUTO_LINK
-//#include <StormLib.h>
 
 #include <stdio.h>
-#include <istream>
-#include <iterator>
-#include <vector>
-
-
-//#include "fcntl.h"
-//#include <io.h>
-
 
 #include "pklib.h"
-#include <assert.h> 
+#include <assert.h>
 
 #ifndef far
 #define far
@@ -25,26 +13,18 @@
 typedef unsigned char BYTE;
 typedef BYTE far *LPBYTE;
 
-//You need to include fcntl.h and io.h to do this
-
-FILE *out_stream;
-FILE *in_stream;
-
-#define STORM_ALLOC(type, nitems)        (type *)malloc((nitems) * sizeof(type))
+#define STORM_ALLOC(type, nitems) (type *)malloc((nitems) * sizeof(type))
 #define STORM_REALLOC(type, ptr, nitems) (type *)realloc(ptr, ((nitems) * sizeof(type)))
-#define STORM_FREE(ptr)                  free(ptr)
+#define STORM_FREE(ptr) free(ptr)
 
 // Information about the input and output buffers for pklib
 typedef struct
 {
-	unsigned char * pbInBuff;           // Pointer to input data buffer
-	unsigned char * pbInBuffEnd;        // End of the input buffer
-	unsigned char * pbOutBuff;          // Pointer to output data buffer
-	unsigned char * pbOutBuffEnd;       // Pointer to output data buffer
+	unsigned char *pbInBuff;	 // Pointer to input data buffer
+	unsigned char *pbInBuffEnd;	 // End of the input buffer
+	unsigned char *pbOutBuff;	 // Pointer to output data buffer
+	unsigned char *pbOutBuffEnd; // Pointer to output data buffer
 } TDataInfo;
-
-
-
 
 // Function loads data from the input buffer. Used by Pklib's "implode"
 // and "explode" function as user-defined callback
@@ -54,9 +34,9 @@ typedef struct
 //   unsigned int * size - Max. number of bytes to read
 //   void * param        - Custom pointer, parameter of implode/explode
 
-static unsigned int ReadInputData(char * buf, unsigned int * size, void * param)
+static unsigned int ReadInputData(char *buf, unsigned int *size, void *param)
 {
-	TDataInfo * pInfo = (TDataInfo *)param;
+	TDataInfo *pInfo = (TDataInfo *)param;
 	unsigned int nMaxAvail = (unsigned int)(pInfo->pbInBuffEnd - pInfo->pbInBuff);
 	unsigned int nToRead = *size;
 
@@ -78,9 +58,9 @@ static unsigned int ReadInputData(char * buf, unsigned int * size, void * param)
 //   unsigned int * size - Number of bytes to write
 //   void * param        - Custom pointer, parameter of implode/explode
 
-static void WriteOutputData(char * buf, unsigned int * size, void * param)
+static void WriteOutputData(char *buf, unsigned int *size, void *param)
 {
-	TDataInfo * pInfo = (TDataInfo *)param;
+	TDataInfo *pInfo = (TDataInfo *)param;
 	unsigned int nMaxWrite = (unsigned int)(pInfo->pbOutBuffEnd - pInfo->pbOutBuff);
 	unsigned int nToWrite = *size;
 
@@ -94,15 +74,14 @@ static void WriteOutputData(char * buf, unsigned int * size, void * param)
 	assert(pInfo->pbOutBuff <= pInfo->pbOutBuffEnd);
 }
 
-extern "C" {
-	void Compress_PKLIB(void * pvOutBuffer, int * pcbOutBuffer, void * pvInBuffer, int cbInBuffer)
+extern "C"
+{
+	int Compress_PKLIB(void *pvOutBuffer, int *pcbOutBuffer, void *pvInBuffer, int cbInBuffer, int dictSize)
 	{
-		TDataInfo Info;                                      // Data information
-		char * work_buf = STORM_ALLOC(char, CMP_BUFFER_SIZE);// Pklib's work buffer
-		unsigned int dict_size;                              // Dictionary size
-		unsigned int ctype = CMP_BINARY;                     // Compression type
-
-
+		TDataInfo Info;										 // Data information
+		char *work_buf = STORM_ALLOC(char, CMP_BUFFER_SIZE); // Pklib's work buffer
+		unsigned int dict_size = dictSize;					 // Dictionary size
+		unsigned int ctype = CMP_BINARY;					 // Compression type
 
 		// Handle no-memory condition
 		if (work_buf != NULL)
@@ -121,27 +100,23 @@ extern "C" {
 			// Starcraft I uses the variable dictionary size based on algorithm below
 			//
 
-			if (cbInBuffer < 0x600)
-				dict_size = CMP_IMPLODE_DICT_SIZE1;
-			else if (0x600 <= cbInBuffer && cbInBuffer < 0xC00)
-				dict_size = CMP_IMPLODE_DICT_SIZE2;
-			else
-				dict_size = CMP_IMPLODE_DICT_SIZE3;
-
 			// Do the compression
-			if (implode(ReadInputData, WriteOutputData, work_buf, &Info, &ctype, &dict_size) == CMP_NO_ERROR)
+			unsigned int result = implode(ReadInputData, WriteOutputData, work_buf, &Info, &ctype, &dict_size);
+			if (result == CMP_NO_ERROR)
 				*pcbOutBuffer = (int)(Info.pbOutBuff - (unsigned char *)pvOutBuffer);
 
 			STORM_FREE(work_buf);
+
+			return result;
 		}
 
-
+		return CMP_ABORT;
 	}
 
-	int Decompress_PKLIB(void * pvOutBuffer, int * pcbOutBuffer, void * pvInBuffer, int cbInBuffer)
+	int Decompress_PKLIB(void *pvOutBuffer, int *pcbOutBuffer, void *pvInBuffer, int cbInBuffer)
 	{
-		TDataInfo Info;                             // Data information
-		char * work_buf = STORM_ALLOC(char, EXP_BUFFER_SIZE);// Pklib's work buffer
+		TDataInfo Info;										 // Data information
+		char *work_buf = STORM_ALLOC(char, EXP_BUFFER_SIZE); // Pklib's work buffer
 
 		// Handle no-memory condition
 		if (work_buf == NULL)
@@ -169,5 +144,4 @@ extern "C" {
 		STORM_FREE(work_buf);
 		return 1;
 	}
-
 }

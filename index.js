@@ -1,4 +1,8 @@
-const stormlibWasm = require("./dist/slibjs");
+const stormlibWasm = require("./dist/stormlib-js");
+
+const ImplodeDictSize1 = 1024;
+const ImplodeDictSize2 = 2048;
+const ImplodeDictSize3 = 4096;
 
 let wasm;
 
@@ -11,7 +15,7 @@ function prepare(inBuffer) {
   );
 }
 
-function implode(inBuffer) {
+function implode(inBuffer, dictSize) {
   const srcArray = prepare(inBuffer);
   var inBuff = wasm._malloc(srcArray.byteLength);
 
@@ -24,7 +28,23 @@ function implode(inBuffer) {
   wasm.HEAPU8.set(srcArray, inBuff);
   wasm.HEAPU8.set(dstArray, outBuff);
   wasm.HEAP32.set(dstSizeArray, outSizeBuff >> 2);
-  wasm._Compress_PKLIB(outBuff, outSizeBuff, inBuff, srcArray.byteLength);
+
+  if (dictSize === undefined) {
+    if (srcArray.byteLength < 0x600) {
+      dictSize = ImplodeDictSize1;
+    } else if (0x600 <= srcArray.byteLength && srcArray.byteLength < 0xc00) {
+      dictSize = ImplodeDictSize2;
+    } else {
+      dictSize = ImplodeDictSize3;
+    }
+  }
+  wasm._Compress_PKLIB(
+    outBuff,
+    outSizeBuff,
+    inBuff,
+    srcArray.byteLength,
+    dictSize
+  );
 
   const finalSize = wasm.getValue(outSizeBuff, "i32");
   const finalBuffer = new Uint8Array(
@@ -88,4 +108,7 @@ module.exports = {
   implode,
   explode,
   loaded,
+  ImplodeDictSize1,
+  ImplodeDictSize2,
+  ImplodeDictSize3,
 };
